@@ -76,5 +76,5 @@ let poll_from_twitter () =
   | 304 -> Tweets([])
   | _ -> Error(parse_error code body response#response_status_text)
 
-let () = http_verbose ()
+let () = http_verb
 
