@@ -77,14 +77,14 @@ let poll_from_twitter () =
       | _                     -> failwith "Expected long value for HTTP code"
   in
   let handle = Curl.init() in
-  Curl.set_verbose handle true;
-  let feed_url = "http://twitter.com/statuses/public_timeline.rss" in
+  (*Curl.set_verbose handle true;*)
+  let feed_url = "http://twitter.com/statuses/public_timeline.xml" in
   (*"http://" ^ !http_user ^ ":" ^ !http_password ^ "@twitter.com/statuses/friends_timeline.xml" in *)
   Curl.set_url handle feed_url;
-  (* Curl.set_userpwd handle (!http_user ^ ":" ^ !http_password);
-  Curl.set_httpauth handle [Curl.CURLAUTH_ANY]; *)
+  Curl.set_userpwd handle (!http_user ^ ":" ^ !http_password);
+  (* Curl.set_httpauth handle [Curl.CURLAUTH_ANY];  *)
   let body = ref "" in
-  let write_to_body str = body := str in
+  let write_to_body str = body := (!body ^ str) in
   Curl.set_writefunction handle write_to_body;
   Curl.perform handle;
   let body = Xml.parse_string !body in
