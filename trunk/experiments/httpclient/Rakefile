@@ -1,0 +1,52 @@
+# Fix for FileList
+class Rake::FileList
+  def exclude_fl(file_list)
+    file_list.to_a.each { |file|
+      self.exclude(file)
+    }
+  end
+end
+
+require 'rake/clean' 
+
+title = 'example'
+
+task :default => [title]
+
+@libs = ['netclient']
+
+# The modules we're working with
+mods = FileList.new('*.ml')
+mods.exclude("#{title}.ml")
+mod_names = mods.ext
+mod_objs = mods.ext('.ml')
+mod_ints = mods.ext('.cmi')
+
+CLOBBER.include(title, '*.mli')
+CLEAN.include('*.cmo', '*.cml', '*.o', '*.out', '*.cmi', '*.cmx')
+
+def build_cmd
+  "ocamlfind ocamlopt -warn-error A -package #{@libs.join(",")} -linkpkg "
+end
+
+desc "Compiles the program into a native executable"
+file title => mod_objs + [ "#{title}.ml" ] + mod_ints do |t|
+  impls = t.prerequisites.to_a - mod_ints
+  sh build_cmd + "-o #{t.name} #{impls.join(" ")}"
+end
+
+rule '.cmx' => '.ml' do |t|
+    my_mods = FileList.new('*.cmx')
+    my_mods.exclude_fl(t.prerequisites)
+    sh build_cmd + "-c -o #{t.name} #{t.prerequisites.join(" ")} " + my_mods.to_s
+end
+
+rule '.cmi' => '.mli' do |t|
+  #my_mods = FileList.new('*.cmi')
+  #my_mods.exclude_fl(t.prerequisites)
+  sh build_cmd + "-c #{t.prerequisites.join(" ")} " #+ my_mods.to_s
+end
+
+rule '.mli' => '.ml' do |t|
+  sh build_cmd + "-i #{t.source} > #{t.name}"
+end
