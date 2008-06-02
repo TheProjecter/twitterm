@@ -1,4 +1,3 @@
-open Http_client.Convenience
 open XmlUtil
 
 type error = 
@@ -38,6 +37,9 @@ type tweet = {
 
 type twit_response = Tweets of tweet list | Error of error
 
+let http_user = ref ""
+let http_password = ref ""
+
 let set_twit_auth user pass =
   http_user := user;
   http_password := pass
@@ -68,13 +70,31 @@ let parse_error code xdata def =
   error_of_int_str code msg
 
 let poll_from_twitter () =
-  let response = http_get_message "http://twitter.com/statuses/friends_timeline.xml" in
-  let body = Xml.parse_string response#response_body#value in
-  let code = response#response_status_code in
+  let code_from h =
+    let res = Curl.getinfo h Curl.CURLINFO_RESPONSE_CODE in
+    match res with
+      | Curl.CURLINFO_Long(i) -> i
+      | _                     -> failwith "Expected long value for HTTP code"
+  in
+  let handle = Curl.init() in
+  Curl.set_verbose handle true;
+  let feed_url = "http://twitter.com/statuses/public_timeline.rss" in
+  (*"http://" ^ !http_user ^ ":" ^ !http_password ^ "@twitter.com/statuses/friends_timeline.xml" in *)
+  Curl.set_url handle feed_url;
+  (* Curl.set_userpwd handle (!http_user ^ ":" ^ !http_password);
+  Curl.set_httpauth handle [Curl.CURLAUTH_ANY]; *)
+  let body = ref "" in
+  let write_to_body str = body := str in
+  Curl.set_writefunction handle write_to_body;
+  Curl.perform handle;
+  let body = Xml.parse_string !body in
+  let code = code_from handle in
   match code with
   | 200 -> Tweets(parse_tweets body)
   | 304 -> Tweets([])
-  | _ -> Error(parse_error code body response#response_status_text)
+  | _ -> Error(parse_error code body "[[UNKNOWN ERROR]]")
 
-let () = http_verb
-
+let () = 
+  Curl.global_init Curl.CURLINIT_GLOBALALL;
+  at_exit Curl.global_cleanup;
+  ()

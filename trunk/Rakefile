@@ -13,7 +13,7 @@ title = 'twitterm'
 
 task :default => [title]
 
-@libs = ['ansiterminal', 'unix', 'xml-light', 'netclient']
+@libs = ['ansiterminal', 'unix', 'xml-light', 'netclient', 'curl']
 
 # The modules we're working with
 mods = FileList.new('xmlUtil.ml', '*.ml')
