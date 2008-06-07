@@ -13,7 +13,8 @@ title = 'twitterm'
 
 task :default => [title]
 
-@libs = ['ansiterminal', 'unix', 'xml-light', 'netclient', 'curl']
+@findlibs = ['ansiterminal', 'unix', 'xml-light', 'curl']
+@cmxa = "" # FileList.new('./lib/*.cmxa')
 
 # The modules we're working with
 mods = FileList.new('xmlUtil.ml', '*.ml')
@@ -26,27 +27,27 @@ CLOBBER.include(title, '*.mli')
 CLEAN.include('*.cmo', '*.cml', '*.o', '*.out', '*.cmi', '*.cmx')
 
 def build_cmd
-  "ocamlfind ocamlopt -warn-error A -package #{@libs.join(",")} -linkpkg "
+  "ocamlfind ocamlopt -warn-error A -package #{@findlibs.join(",")} -I ./lib -linkpkg "
 end
 
 desc "Compiles the program into a native executable"
 file title => mod_objs + [ "#{title}.ml" ] + mod_ints do |t|
-  impls = t.prerequisites.to_a - mod_ints
+  impls = @cmxa.to_a + t.prerequisites.to_a - mod_ints
   sh build_cmd + "-o #{t.name} #{impls.join(" ")}"
 end
 
 rule '.cmx' => '.ml' do |t|
     my_mods = FileList.new('*.cmx')
     my_mods.exclude_fl(t.prerequisites)
-    sh build_cmd + "-c -o #{t.name} #{t.prerequisites.join(" ")} " + my_mods.to_s
+    sh build_cmd + "-c -o #{t.name} #{t.prerequisites.join(" ")} #{@cmxa.to_s} #{my_mods.to_s}"
 end
 
 rule '.cmi' => '.mli' do |t|
   #my_mods = FileList.new('*.cmi')
   #my_mods.exclude_fl(t.prerequisites)
-  sh build_cmd + "-c #{t.prerequisites.join(" ")} " #+ my_mods.to_s
+  sh build_cmd + "-c #{t.prerequisites.join(" ")}  #{@cmxa.to_s}"
 end
 
 rule '.mli' => '.ml' do |t|
-  sh build_cmd + "-i #{t.source} > #{t.name}"
+  sh build_cmd + "-i #{@cmxa.to_s} #{t.source} > #{t.name}"
 end
