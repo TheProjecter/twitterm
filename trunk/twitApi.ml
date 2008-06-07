@@ -1,5 +1,13 @@
 open XmlUtil
 
+let handle =
+  Curl.global_init Curl.CURLINIT_GLOBALALL;
+  let h = Curl.init() in
+  at_exit (
+    fun () -> Curl.cleanup h; Curl.global_cleanup ()
+  );
+  h
+
 type error = 
   | NotModified
   | BadRequest of string (* Exceeded Rate Limit *)
@@ -37,12 +45,7 @@ type tweet = {
 
 type twit_response = Tweets of tweet list | Error of error
 
-let http_user = ref ""
-let http_password = ref ""
-
-let set_twit_auth user pass =
-  http_user := user;
-  http_password := pass
+let set_twit_auth user pass = Curl.set_userpwd handle (user ^ ":" ^ pass)
 
 let parse_tweets xdata =
   let parse_user xdata = {
@@ -76,13 +79,10 @@ let poll_from_twitter () =
       | Curl.CURLINFO_Long(i) -> i
       | _                     -> failwith "Expected long value for HTTP code"
   in
-  let handle = Curl.init() in
-  (*Curl.set_verbose handle true;*)
+  Curl.set_verbose handle true;
   let feed_url = "http://twitter.com/statuses/public_timeline.xml" in
-  (*"http://" ^ !http_user ^ ":" ^ !http_password ^ "@twitter.com/statuses/friends_timeline.xml" in *)
   Curl.set_url handle feed_url;
-  Curl.set_userpwd handle (!http_user ^ ":" ^ !http_password);
-  (* Curl.set_httpauth handle [Curl.CURLAUTH_ANY];  *)
+  Curl.set_httpauth handle [Curl.CURLAUTH_ANY]; 
   let body = ref "" in
   let write_to_body str = body := (!body ^ str) in
   Curl.set_writefunction handle write_to_body;
@@ -94,7 +94,5 @@ let poll_from_twitter () =
   | 304 -> Tweets([])
   | _ -> Error(parse_error code body "[[UNKNOWN ERROR]]")
 
-let () = 
-  Curl.global_init Curl.CURLINIT_GLOBALALL;
-  at_exit Curl.global_cleanup;
-  ()
+let () = let version = Curl.version() in print_endline ("Using curlib version " ^ version)
+
