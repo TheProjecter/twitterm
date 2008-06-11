@@ -10,3 +10,6 @@
    available from
       ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
 
+   The internet connection is provided through libcurl, and the ocurl wrapper
+   package for OCaml.  Please see its license under ./lib/COPYING.
+

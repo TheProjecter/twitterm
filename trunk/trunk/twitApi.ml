@@ -1,11 +1,9 @@
 open XmlUtil
 
 let handle =
-  Curl.global_init Curl.CURLINIT_GLOBALALL;
+  Curl.global_init Curl.CURLINIT_GLOBALALL; 
   let h = Curl.init() in
-  at_exit (
-    fun () -> Curl.cleanup h; Curl.global_cleanup ()
-  );
+  at_exit (fun () -> Curl.cleanup h; Curl.global_cleanup ());
   h
 
 type error = 
@@ -80,7 +78,7 @@ let poll_from_twitter () =
       | _                     -> failwith "Expected long value for HTTP code"
   in
   Curl.set_verbose handle true;
-  let feed_url = "http://twitter.com/statuses/public_timeline.xml" in
+  let feed_url = "http://twitter.com/statuses/friends_timeline.xml" in
   Curl.set_url handle feed_url;
   Curl.set_httpauth handle [Curl.CURLAUTH_ANY]; 
   let body = ref "" in
