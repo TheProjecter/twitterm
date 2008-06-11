@@ -57,7 +57,7 @@ let sighand, user_loop =
 let intr = ref false
 
 let () =
-  set_twit_auth "RobertFischer" "Cowpie68";
+  set_twit_auth "RobertFischer" "PASSWORD";
   let rec loop () = user_loop(); Unix.sleep 2; loop() in
   set_signal sigint sighand;
   erase Screen;
